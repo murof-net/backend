@@ -35,4 +35,4 @@ Start the **FastAPI server**
 fastapi dev ./api/main.py
 ```
 
-Test database connections and API endpoints at: http://127.0.0.1:8000/test/modules0
+Test database connection and API endpoints at: http://127.0.0.1:8000/test/modules0
