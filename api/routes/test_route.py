@@ -35,4 +35,3 @@ async def get_group(limit: int = 10):
     """Using neomodel query"""
     modules = Module.nodes.all()[:limit]
     return modules
--
