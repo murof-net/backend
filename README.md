@@ -10,6 +10,7 @@ Notes on technologies used:
 - `async` functions for handling requests asynchronously
 - `neomodel` for interacting with the Neo4j database
 - `pydantic` for data validation and serialization
+- authentication?!
 
 
 ## Quickstart
@@ -36,3 +37,8 @@ fastapi dev ./api/main.py
 ```
 
 Test database connection and API endpoints at: http://127.0.0.1:8000/test/modules0
+
+## Roadmap
+- [ ] JWT authentication
+- [ ] first basic endpoint for sveltekit front-end request
+- [ ] knowledge-graph with the [Neo4j graphbuilder tool](https://llm-graph-builder.neo4jlabs.com/)
