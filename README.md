@@ -17,7 +17,7 @@ Notes on technologies used:
 Start **Python virtual environment** and install requirements.
 
 ```bash
-python -m venv ./myenv
+python3 -m venv ./myenv
 source menv/bin/activate
 pip install -r requirements.txt
 ```
@@ -27,6 +27,7 @@ Start **Neo4j database** (or connect to Aura instance).
 ```bash
 sudo systemctl start neo4j
 ```
+Add `.env` file with database login info
 
 Start the **FastAPI server**
 
