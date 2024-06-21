@@ -14,7 +14,7 @@ Notes on technologies used:
 
 ## Quickstart
 
-Start Python virtual environment and install requirements.
+Start **Python virtual environment** and install requirements.
 
 ```bash
 python -m venv ./myenv
@@ -22,13 +22,13 @@ source menv/bin/activate
 pip install -r requirements.txt
 ```
 
-Start Neo4j database (or connect to Aura instance).
+Start **Neo4j database** (or connect to Aura instance).
 
 ```bash
 sudo systemctl start neo4j
 ```
 
-Start the FastAPI server
+Start the **FastAPI server**
 
 ```bash
 fastapi dev ./api/main.py
