@@ -19,7 +19,7 @@ Start **Python virtual environment** and install requirements.
 
 ```bash
 python3 -m venv ./myenv
-source menv/bin/activate
+source myenv/bin/activate
 pip install -r requirements.txt
 ```
 
