@@ -60,3 +60,8 @@ async def root():
         and serve data to the frontend.
     """
     return {"message": "Hello World"}
+
+
+
+######################################################################
+#  Testing authentication and authorization
