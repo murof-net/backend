@@ -4,7 +4,7 @@ FastAPI / Neo4j back-end of murof.net
 
 ## Context
 
-The `FastAPI` server is used to serve the API endpoints for the Murof application. It is responsible for handling requests from the front-end, querying the Neo4j database, and returning the appropriate responses.
+The [`FastAPI`](https://fastapi.tiangolo.com/tutorial/first-steps/) server is used to serve the API endpoints for the [murof](murof.net) web-application. It is responsible for handling requests from the front-end, querying the Neo4j database, and returning the appropriate responses.
 
 Notes on technologies used:
 - [`async`](https://docs.python.org/3/library/asyncio.html) functions for handling requests asynchronously
@@ -39,6 +39,9 @@ fastapi dev ./api/main.py
 Test database connection and API endpoints at: http://127.0.0.1:8000/test/modules0
 
 ## Roadmap
+- [x] root endpoint helloworld
+- [x] connection with neo4j
+- [ ] Development bash script (also for frontend)
 - [ ] JWT authentication
 - [ ] first basic endpoint for sveltekit front-end request
 - [ ] unit tests (with `pytest`?)
