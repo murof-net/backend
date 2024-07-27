@@ -101,7 +101,7 @@ class Person(StructuredNode):
     interests = RelationshipTo('Subject', 'INTERESTED_IN')
 
 class Email(StructuredNode):
-    email = EmailProperty()
+    email = EmailProperty(required=True, unique_index=True)
 
 class User(Person):
     """

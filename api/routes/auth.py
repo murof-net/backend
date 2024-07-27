@@ -1,24 +1,27 @@
+"""Routes for authentication"""
+
 from fastapi import APIRouter, HTTPException, Depends
 from connection import get_session
-from models.test_model import Module
 
-from .helper import execute_read_query
+# from .helper import execute_read_query
+
+# Pydantic validation tools
 from pydantic import BaseModel
+from pydantic.networks import EmailStr
 
-# Models for social entities: Email, Person and User
-from models.socialgraph import Email, Person, User
+# Neo4j models
+from models.social.email import Email
+
+################################################################
 
 router = APIRouter()
 
 class EmailRequest(BaseModel):
-    email: str
+    email: EmailStr
 
 @router.post("/")
-async def email_signup(email_request: EmailRequest, session=Depends(get_session)):
+async def signup_email(email_request: EmailRequest, session=Depends(get_session)):
     print(email_request.email)
-    """Using neomodel query"""
-    modules = Email.nodes.all()
-
     if email_request.email == "existing@example.com":
         return {
             "ok": True,
