@@ -1,39 +1,43 @@
 """Routes for authentication"""
 
 from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel, EmailStr
+import neomodel
+from models.social.email import Email
 from connection import get_session
 
-# from .helper import execute_read_query
-
-# Pydantic validation tools
-from pydantic import BaseModel
-from pydantic.networks import EmailStr
-
-# Neo4j models
-from models.social.email import Email
-
-################################################################
 
 router = APIRouter()
 
 class EmailRequest(BaseModel):
     email: EmailStr
 
-@router.post("/")
+@router.post("/", status_code=201)
 async def signup_email(email_request: EmailRequest, session=Depends(get_session)):
-    print(email_request.email)
-    if email_request.email == "existing@example.com":
+    print("email_request: ", email_request)
+    try: 
+        email = Email.nodes.get(email=email_request.email)
+        print("email already exists")
         return {
-            "ok": True,
+            "ok": True, 
+            "message": "New signup successful or was already signed up",
             "email": email_request.email
             }
-    else:
+    
+    except neomodel.DoesNotExist:
+        email = Email(email=email_request.email).save()
+        print("new email created")
         return {
-            "ok": False,
+            "ok": True, 
+            "message": "New signup successful or was already signed up",
             "email": email_request.email
             }
+    
+    except Exception as e:
+        print("Error: ", e)
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
-# @router.get("/login")
+# @router.post("/login")
 
 # @router.get("/register")
