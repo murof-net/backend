@@ -100,6 +100,8 @@ class Person(StructuredNode):
     studies = RelationshipTo('Concept', 'STUDIES')
     interests = RelationshipTo('Subject', 'INTERESTED_IN')
 
+class Email(StructuredNode):
+    email = EmailProperty()
 
 class User(Person):
     """
