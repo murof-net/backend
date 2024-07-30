@@ -1,70 +1,135 @@
-"""Routes for authentication"""
+"""
+Routes for authentication
+ - /auth/ : Login creates a JWT token if the credentials are valid
+ - /auth/register/ : Register creates a new user in the database if the credentials don't already exist
+ - /auth/me/ : Get basic info on the current user
+"""
 
 from typing import Annotated
 from fastapi import APIRouter, HTTPException, Depends, status
-from pydantic import BaseModel, EmailStr
-import neomodel
-# from models.social.email import Email
-# from connection import get_session
 
+import jwt
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-# from auth import jwt_handler
+from jwt.exceptions import InvalidTokenError
+from passlib.context import CryptContext
+
+from pydantic import BaseModel, EmailStr
+from datetime import date, datetime, timedelta, timezone
+
+import neomodel
+
+
+SECRET_KEY = "6427e6b68498cb2815bd7083cd0f7cf2e9cb7d0bc3c0c8398940f10d4090fad4" # use "openssl rand -hex 32" to generate a new one
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
 
 router = APIRouter()
 
+
 fake_users_db = {
     "johndoe@example.com": {
-        "username": "johndoe@example.com",
-        "fristName": "John",
+        "firstName": "John",
         "lastName": "Doe",
-        "hashed_password": "fakehashedsecret",
+        "email": "johndoe@example.com",
+        "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
+        "birthDate": "2000-01-01",
+        "languages": ["English", "French"],
+        "registration": datetime.now(),
         "disabled": False,
-    },
-    "alice@example.com": {
-        "username": "alice@example.com",
-        "firstName": "Alice",
-        "lastName": "Doe",
-        "hashed_password": "fakehashedsecret2",
-        "disabled": True,
-    },
+    }
 }
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: EmailStr | None = None
+
+
+class User(BaseModel):
+    firstName: str
+    lastName: str
+    email: EmailStr
+    hashed_password: str
+    birthDate: date
+    languages: list[str]
+    registration: datetime = datetime.now()
+    disabled: bool = False
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
 
 def fake_hash_password(password: str):
     return "fakehashed" + password
 
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-class User(BaseModel):
-    username: EmailStr
-    firstName: str | None = None
-    lastName: str | None = None
-    disabled: bool | None = None
 
-class UserInDB(User):
-    hashed_password: str
+##################################################################
 
 
-def get_user(db, username: str):
-    if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
 
 
-def fake_decode_token(token):
-    # This doesn't provide any security at all
-    # Check the next version
-    user = get_user(fake_users_db, token)
+def get_hashed_password(password):
+    return pwd_context.hash(password)
+
+
+def get_user(db, email: str):
+    if email in db:
+        user_dict = db[email]
+        return User(**user_dict)
+
+
+def authenticate_user(fake_db, email: str, password: str):
+    user = get_user(fake_db, email)
+    if not user:
+        return False
+    if not verify_password(password, user.hashed_password):
+        return False
     return user
 
 
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    user = fake_decode_token(token)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+        token_data = TokenData(username=username)
+    except InvalidTokenError:
+        raise credentials_exception
+    
+    user = get_user(fake_users_db, email=token_data.username)
+    if user is None:
+        raise credentials_exception
+    
     return user
 
 
@@ -76,66 +141,29 @@ async def get_current_active_user(
     return current_user
 
 
-@router.post("/token")
-async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
-    # Get the user from the database by email (username according to OpenAPI spec)
-    user_dict = fake_users_db.get(form_data.username)
-
-    # If the user doesn't exist, raise an exception
-    if not user_dict:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
-    
-    # If the password doesn't match, raise an exception
-    user = UserInDB(**user_dict)
-    hashed_password = fake_hash_password(form_data.password)
-    if not hashed_password == user.hashed_password:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
-
-    # Return JSON with an access token and a token type
-    return {"access_token": user.username, "token_type": "bearer"}
+##################################################################
 
 
-@router.get("/users/me")
-async def read_users_me(
-    current_user: Annotated[User, Depends(get_current_active_user)]):
-    """
-    Get user, only if
-    - they exists
-    - was correctly authenticated
-    - they are active
-    """
+@router.post("/")
+async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> Token:
+    print(form_data.username, form_data.password)
+    user = authenticate_user(fake_users_db, email=form_data.username, password=form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.email}, expires_delta=access_token_expires
+    )
+    return Token(access_token=access_token, token_type="bearer")
+
+@router.get("/me", response_model=User)
+async def read_users_me(current_user: Annotated[User, Depends(get_current_active_user)]):
     return current_user
 
-
-
-
-
-# @router.post("/", status_code=201)
-# async def signup_email(email_request: EmailRequest, session=Depends(get_session)):
-#     print("email_request: ", email_request)
-#     try: 
-#         email = Email.nodes.get(email=email_request.email)
-#         print("email already exists")
-#         return {
-#             "ok": True, 
-#             "message": "New signup successful or was already signed up",
-#             "email": email_request.email
-#             }
-    
-#     except neomodel.DoesNotExist:
-#         email = Email(email=email_request.email).save()
-#         print("new email created")
-#         return {
-#             "ok": True, 
-#             "message": "New signup successful or was already signed up",
-#             "email": email_request.email
-#             }
-    
-#     except Exception as e:
-#         print("Error: ", e)
-#         raise HTTPException(status_code=500, detail="Internal server error") from e
-
-
-# @router.post("/login")
-
-# @router.get("/register")
+@router.get("/me/items/")
+async def read_own_items(current_user: Annotated[User, Depends(get_current_active_user)]):
+    return [{"item_id": "Foo", "owner": current_user.email}]
