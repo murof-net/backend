@@ -30,8 +30,6 @@ from routes.auth import router as auth
 
 
 # AUTH : authentication and authorization
-# from auth import jwt_handler
-
 
 
 ######################################################################
