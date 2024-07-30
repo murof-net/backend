@@ -27,18 +27,18 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 router = APIRouter()
 
 
-fake_users_db = {
-    "johndoe@example.com": {
-        "firstName": "John",
-        "lastName": "Doe",
-        "email": "johndoe@example.com",
-        "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
-        "birthDate": "2000-01-01",
-        "languages": ["English", "French"],
-        "registration": datetime.now(),
-        "disabled": False,
-    }
-}
+# fake_users_db = {
+#     "johndoe@example.com": {
+#         "firstName": "John",
+#         "lastName": "Doe",
+#         "email": "johndoe@example.com",
+#         "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
+#         "birthDate": "2000-01-01",
+#         "languages": ["English", "French"],
+#         "registration": datetime.now(),
+#         "disabled": False,
+#     }
+# }
 
 
 class Token(BaseModel):
