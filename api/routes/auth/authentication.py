@@ -49,7 +49,7 @@ async def register(form: UserRegister):
             status_code=status.HTTP_409_CONFLICT,
             detail="User with this email address already exists",
         )
-    return status.HTTP_201_CREATED
+    return status.HTTP_200_OK
 
 
 @router.get("/me", response_model=User)
