@@ -38,7 +38,7 @@ def get_hashed_password(password: str) -> str:
     return pwd_context.hash(password)
 
 
-async def get_user(email: str):
+async def get_user(email: str) -> UserModel | None:
     """
     Get the user with the given email from the database
     """
@@ -98,8 +98,8 @@ async def get_current_active_user(current_user: Annotated[User, Depends(get_curr
     """
     Get the current active user
     """
-    if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")
+    if not current_user.is_active:
+        raise HTTPException(status_code=400, detail="User has not been activated")
     return current_user
 
 
@@ -120,7 +120,7 @@ async def register_user(form: UserRegister):
         hashed_password=hashed_password,
         birth_date=form.birthDate,
         registration=datetime.now(),
-        disabled=True
+        is_active=True
     ).save()
     # Create languages and connect
     for language in form.languages:

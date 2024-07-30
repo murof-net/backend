@@ -24,6 +24,6 @@ class User(StructuredNode):
     hashed_password = StringProperty(required=True)
     birth_date = DateProperty(required=True)
     registration = DateTimeProperty(default_now=True)
-    disabled = BooleanProperty(default=False)
+    is_active = BooleanProperty(default=False)
 
     languages = RelationshipTo('Language', 'HAS_LANGUAGE')
