@@ -18,13 +18,13 @@ from .helper import ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_curren
 router = APIRouter()
 
 
-@router.post("/")
+@router.post("")
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> Token:
     """
     Login creates a JWT token if the credentials are valid
     """
-    # print(form_data.username, form_data.password)
-    user = authenticate_user(email=form_data.username, password=form_data.password)
+    print(form_data.username)
+    user = await authenticate_user(email=form_data.username, password=form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -35,15 +35,17 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> T
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
+    print(access_token)
     return Token(access_token=access_token, token_type="bearer")
 
 
 @router.post("/register")
-async def register(form: UserRegister):
+async def register(form_data: UserRegister):
     """
     Register creates a new user in the database if the credentials don't already exist
     """
-    user = await register_user(form)
+    print(form_data)
+    user = await register_user(form_data)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
