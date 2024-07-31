@@ -10,7 +10,7 @@ Notes on technologies used:
 - [`async`](https://docs.python.org/3/library/asyncio.html) functions for handling requests asynchronously
 - [`neomodel`](https://neomodel.readthedocs.io/en/latest/) for interacting with the Neo4j database
 - [`pydantic`](https://docs.pydantic.dev/latest/) for data validation and serialization
-- authentication?!
+- [`jwt`](https://jwt.io/), [`bcrypt`](https://github.com/pyca/bcrypt/) and [`passlib`](https://passlib.readthedocs.io/en/stable/) for authentication
 
 
 ## Quickstart
