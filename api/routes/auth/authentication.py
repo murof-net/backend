@@ -23,7 +23,7 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> T
     """
     Login creates a JWT token if the credentials are valid
     """
-    print(form_data.username)
+    # print(form_data.username)
     user = await authenticate_user(email=form_data.username, password=form_data.password)
     if not user:
         raise HTTPException(
@@ -35,7 +35,9 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> T
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
-    print(access_token)
+    # print(user)
+    # print(user.languages)
+    # print(access_token)
     return Token(access_token=access_token, token_type="bearer")
 
 
@@ -44,7 +46,7 @@ async def register(form_data: UserRegister):
     """
     Register creates a new user in the database if the credentials don't already exist
     """
-    print(form_data)
+    # print(form_data)
     user = await register_user(form_data)
     if not user:
         raise HTTPException(
