@@ -42,7 +42,7 @@ Test database connection and API endpoints at: http://127.0.0.1:8000/test/module
 - [x] root endpoint helloworld
 - [x] connection with neo4j
 - [x] Development bash script (also for frontend)
-- [ ] JWT authentication
+- [x] JWT authentication
 - [ ] first basic endpoint for sveltekit front-end request
 - [ ] unit tests (with `pytest`?)
 - [ ] api setup and documentation
