@@ -43,6 +43,7 @@ Test database connection and API endpoints at: http://127.0.0.1:8000/test/module
 - [x] connection with neo4j
 - [x] Development bash script (also for frontend)
 - [x] JWT authentication
+- [ ] update startup to use neo4j desktop DBMS instead of systemctl
 - [ ] first basic endpoint for sveltekit front-end request
 - [ ] unit tests (with `pytest`?)
 - [ ] api setup and documentation
