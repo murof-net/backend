@@ -10,12 +10,11 @@ FastAPI application main file
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from connection import lifespan, get_driver
-# import asyncio # async functions e.g. asyncio.sleep(1) to avoid blocking
-
+from fastapi.responses import FileResponse
+import os
 
 # ROUTES : API route definitions for handling endpoints
 from routes.auth.authentication import router as auth
-
 
 ######################################################################
 
@@ -37,9 +36,7 @@ app.add_middleware(
 
 app.include_router(auth, prefix="/auth")
 
-
 ######################################################################
-
 
 @app.get("/")
 async def root():
@@ -50,3 +47,9 @@ async def root():
         and serve data to the frontend.
     """
     return {"message": "Hello World"}
+
+@app.get("/favicon.ico")
+async def favicon():
+    """Load the favicon (browsers request this automatically)"""
+    file_path = os.path.join(os.path.dirname(__file__), "./static/favicon.ico")
+    return FileResponse(file_path)
