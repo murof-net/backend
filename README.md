@@ -36,13 +36,14 @@ Start the **FastAPI server**
 fastapi dev ./api/main.py
 ```
 
-Test database connection and API endpoints at: http://127.0.0.1:8000/test/modules0
+Check out the autamatic `/docs` route
 
 ## Roadmap
 - [x] root endpoint helloworld
 - [x] connection with neo4j
 - [x] Development bash script (also for frontend)
 - [x] JWT authentication
+- [ ] Host on Vercel serverless
 - [ ] Proper JWT auth with SvelteKit frontend (or without in case API is used stand-alone)
 - [ ] update startup to use neo4j desktop DBMS instead of systemctl
 - [ ] first basic endpoint for sveltekit front-end request
