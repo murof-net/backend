@@ -50,3 +50,4 @@ Check out the autamatic `/docs` route
 - [ ] unit tests (with `pytest`?)
 - [ ] api setup and documentation
 - [ ] knowledge-graph with the [Neo4j graphbuilder tool](https://llm-graph-builder.neo4jlabs.com/) or more intricate custom LangChain setup + Google Gemini (flash)
+- [ ] PostgreSQL DB setup for [Trax LRS](https://traxlrs.com/) & instant messaging with WebSocket
