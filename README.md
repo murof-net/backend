@@ -43,8 +43,9 @@ Test database connection and API endpoints at: http://127.0.0.1:8000/test/module
 - [x] connection with neo4j
 - [x] Development bash script (also for frontend)
 - [x] JWT authentication
+- [ ] Proper JWT auth with SvelteKit frontend (or without in case API is used stand-alone)
 - [ ] update startup to use neo4j desktop DBMS instead of systemctl
 - [ ] first basic endpoint for sveltekit front-end request
 - [ ] unit tests (with `pytest`?)
 - [ ] api setup and documentation
-- [ ] knowledge-graph with the [Neo4j graphbuilder tool](https://llm-graph-builder.neo4jlabs.com/)
+- [ ] knowledge-graph with the [Neo4j graphbuilder tool](https://llm-graph-builder.neo4jlabs.com/) or more intricate custom LangChain setup + Google Gemini (flash)
