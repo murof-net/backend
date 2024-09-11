@@ -4,14 +4,13 @@ FastAPI / Neo4j back-end of [`murof.net`](https://murof.net)
 
 ## Context
 
-The [`FastAPI`](https://fastapi.tiangolo.com/tutorial/first-steps/) server is used to serve the API endpoints for the [murof](https://murof.net) web-application. It is responsible for handling requests from the front-end, querying the Neo4j database, and returning the appropriate responses.
+The [`FastAPI`](https://fastapi.tiangolo.com/tutorial/first-steps/) server is used to serve the API endpoints for the [murof](https://murof.net) web-application. It is responsible for handling requests from the front-end, querying the database, and returning the appropriate responses.
 
 Notes on technologies used:
 - [`async`](https://docs.python.org/3/library/asyncio.html) functions for handling requests asynchronously
 - [`neomodel`](https://neomodel.readthedocs.io/en/latest/) for interacting with the Neo4j database
 - [`pydantic`](https://docs.pydantic.dev/latest/) for data validation and serialization
 - [`jwt`](https://jwt.io/), [`bcrypt`](https://github.com/pyca/bcrypt/) and [`passlib`](https://passlib.readthedocs.io/en/stable/) for authentication
-
 
 ## Quickstart
 
