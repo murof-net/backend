@@ -9,7 +9,8 @@ FastAPI application main file
 # MAIN : packages for connecting to the database and running the API
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from connection import lifespan, get_driver
+# from neo4jConnection import lifespan, get_driver
+from neo4jConnection import get_driver
 from fastapi.responses import FileResponse
 import os
 
@@ -20,7 +21,7 @@ from routes.auth.authentication import router as auth
 
 app = FastAPI(
     title="Murof API", 
-    lifespan=lifespan,
+    # lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -53,3 +54,13 @@ async def favicon():
     """Load the favicon (browsers request this automatically)"""
     file_path = os.path.join(os.path.dirname(__file__), "./static/favicon.ico")
     return FileResponse(file_path)
+
+@app.get("/test")
+async def test():
+    driver = await get_driver()
+    async with driver.session() as session:
+        # result = await session.run("RETURN 'Hello, World!' AS message")
+        result = await session.run("MATCH (n) RETURN n LIMIT 1")
+        record = await result.single()
+    await driver.close()
+    return record["n"]
