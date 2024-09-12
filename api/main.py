@@ -15,7 +15,7 @@ from fastapi.responses import FileResponse
 import os
 
 # ROUTES : API route definitions for handling endpoints
-from routes.auth.authentication import router as auth
+from .routes.auth.authentication import router as auth
 
 ######################################################################
 
