@@ -10,7 +10,7 @@ from .schema import Token, TokenData, User, UserRegister
 
 from datetime import timedelta, datetime, timezone
 
-from models.social import User as UserModel, Language as LanguageModel
+from ...models.social import User as UserModel, Language as LanguageModel
 
 import os
 from dotenv import load_dotenv
