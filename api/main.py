@@ -10,7 +10,7 @@ FastAPI application main file
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 # from neo4jConnection import lifespan, get_driver
-from neo4jConnection import get_driver
+from .neo4jConnection import get_driver
 from fastapi.responses import FileResponse
 import os
 
