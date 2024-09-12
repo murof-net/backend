@@ -48,7 +48,7 @@ async def root():
     """
     return {"message": "Hello World"}
 
-@app.get("/favicon.ico")
+@app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     """Load the favicon (browsers request this automatically)"""
     file_path = os.path.join(os.path.dirname(__file__), "./static/favicon.ico")
