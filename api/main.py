@@ -7,14 +7,14 @@ FastAPI application main file
 """
 
 # MAIN : packages for connecting to the database and running the API
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .neo4jConnection import get_driver
 from fastapi.responses import FileResponse
 import os
 
 # ROUTES : API route definitions for handling endpoints
-from .routes.auth.authentication import router as auth
+# from .routes.auth.authentication import router as auth
 
 ######################################################################
 
@@ -34,7 +34,7 @@ app.add_middleware(
     allow_credentials=True
 )
 
-app.include_router(auth, prefix="/auth")
+# app.include_router(auth, prefix="/auth")
 
 ######################################################################
 
@@ -46,7 +46,7 @@ async def root():
         Endpoints are defined in the routes.py file
         and serve data to the frontend.
     """
-    return {"message": "Hello World"}
+    return {"message": "Welcome to the Murof API! Visit /docs for more info."}
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
