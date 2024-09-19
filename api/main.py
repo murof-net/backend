@@ -14,7 +14,7 @@ from fastapi.responses import FileResponse
 import os
 
 # ROUTES : API route definitions for handling endpoints
-# from .routes.auth.authentication import router as auth
+from .routes.auth.authentication import router as auth
 
 ######################################################################
 
@@ -34,7 +34,7 @@ app.add_middleware(
     allow_credentials=True
 )
 
-# app.include_router(auth, prefix="/auth")
+app.include_router(auth, prefix="/auth")
 
 ######################################################################
 
