@@ -1,1 +1,1 @@
-
+# Auth-related helper functions
