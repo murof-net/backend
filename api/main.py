@@ -18,6 +18,7 @@ import os
 
 ######################################################################
 
+# global variables
 drivers = {}
 
 @asynccontextmanager
