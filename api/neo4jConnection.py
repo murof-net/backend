@@ -19,10 +19,15 @@ if not (NEO4J_URI and NEO4J_USERNAME and NEO4J_PASSWORD):
         )
 
 # Create an Async Neo4j driver instance
-async def get_driver():
-    """"""
+async def get_neo4j_driver():
     driver = AsyncGraphDatabase.driver(
         NEO4J_URI, 
         auth=(NEO4J_USERNAME, NEO4J_PASSWORD)
     )
     return driver
+
+async def get_neo4j_session():
+    from .main import drivers  # Import the drivers dictionary from main.py
+    driver = drivers["neo4j"]  # Reuse the already initialized driver
+    async with driver.session() as session:
+        yield session

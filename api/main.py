@@ -1,15 +1,15 @@
 """
 FastAPI application main file
     - Exposes API routes and data to the frontend
-    - Neomodel driver for interacting with the Neo4j database
     - Makes use of async to enable asynchronous programming (i.e. concurrent requests)
         See: https://www.youtube.com/watch?v=tGD3653BrZ8 for best FastAPI async practices
 """
 
 # MAIN : packages for connecting to the database and running the API
-from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from .neo4jConnection import get_driver
+from .neo4jConnection import get_neo4j_session
 from fastapi.responses import FileResponse
 import os
 
@@ -18,9 +18,19 @@ import os
 
 ######################################################################
 
+drivers = {}
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from .neo4jConnection import get_neo4j_driver
+    drivers["neo4j"] = await get_neo4j_driver()
+    yield
+    await drivers["neo4j"].close()  # Cleanup: Close driver on shutdown
+    drivers.clear()
+
 app = FastAPI(
     title="Murof API", 
-    # lifespan=lifespan,
+    lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -55,11 +65,7 @@ async def favicon():
     return FileResponse(file_path)
 
 @app.get("/test")
-async def test():
-    driver = await get_driver()
-    async with driver.session() as session:
-        # result = await session.run("RETURN 'Hello, World!' AS message")
-        result = await session.run("MATCH (n) RETURN n LIMIT 1")
-        record = await result.single()
-    await driver.close()
+async def test(session = Depends(get_neo4j_session)):
+    result = await session.run("MATCH (n) RETURN n LIMIT 1")
+    record = await result.single()
     return record["n"]
