@@ -6,17 +6,20 @@ FastAPI application main file
 """
 
 # MAIN : packages for connecting to the database and running the API
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from .neo4jConnection import get_neo4j_session
 from fastapi.responses import FileResponse
-import os
+from .neo4jConnection import get_neo4j_session
+import logging
 
 # ROUTES : API route definitions for handling endpoints
-# from .routes.auth.authentication import router as auth
+from .routes.auth.auth import router as auth
 
 ######################################################################
+
+logging.getLogger('passlib').setLevel(logging.ERROR)
 
 # global variables
 drivers = {}
@@ -36,16 +39,20 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# CORS middleware from SvelteKit frontend at http://localhost:5173
+# CORS middleware from SvelteKit frontend
+origins = [
+    "http://localhost:517*",
+    "https://murof.net"
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:517*"],
+    allow_origins=origins,
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=True
 )
 
-# app.include_router(auth, prefix="/auth")
+app.include_router(auth, prefix="/auth")
 
 ######################################################################
 
@@ -53,9 +60,6 @@ app.add_middleware(
 async def root():
     """
     Root endpoint
-
-        Endpoints are defined in the routes.py file
-        and serve data to the frontend.
     """
     return {"message": "Welcome to the Murof API! Visit /docs for more info."}
 
@@ -66,7 +70,8 @@ async def favicon():
     return FileResponse(file_path)
 
 @app.get("/test")
-async def test(session = Depends(get_neo4j_session)):
+async def test_db(session = Depends(get_neo4j_session)):
+    """Test the database connection"""
     result = await session.run("MATCH (n) RETURN n LIMIT 1")
     record = await result.single()
-    return record["n"]
+    return record["n"] if record else "No records found"
