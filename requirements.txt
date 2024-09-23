@@ -1,8 +1,8 @@
-fastapi==0.115.0
-neo4j==5.22.0
-pyjwt==2.9.0
-bcrypt==4.2.0
-passlib[bcrypt]==1.7.4
+python-multipart==0.0.10
 python-dotenv==1.0.1
 python-jose==3.3.0
-python-multipart
+bcrypt==4.2.0
+passlib[bcrypt]==1.7.4
+pyjwt==2.9.0
+fastapi==0.115.0
+neo4j==5.22.0
