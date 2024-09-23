@@ -11,8 +11,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from .db.db import get_drivers
-from .db.neo4jConnection import get_neo4j_session
+# from .db.db import get_drivers
+# from .db.neo4jConnection import get_neo4j_session
 import logging
 
 # ROUTES : API route definitions for handling endpoints
@@ -22,10 +22,40 @@ from .routes.auth.auth import router as auth
 
 logging.getLogger('passlib').setLevel(logging.ERROR)
 
+######################################################################
+# TEMPORARY CHECK TO SEE HOW VERCEL HANDLES THIS
+import os
+from neo4j import AsyncGraphDatabase
+from dotenv import load_dotenv
+load_dotenv() # Load environment variables from .env file
+NEO4J_URI = os.getenv("NEO4J_URI")
+NEO4J_USERNAME = os.getenv("NEO4J_USERNAME")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
+if not (NEO4J_URI and NEO4J_USERNAME and NEO4J_PASSWORD):
+    raise ValueError(
+        "One or more .env variables are not set: NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD"
+        )
+
+drivers = {}
+
+# Create an Async Neo4j driver instance
+async def get_neo4j_driver():
+    driver = AsyncGraphDatabase.driver(
+        NEO4J_URI, 
+        auth=(NEO4J_USERNAME, NEO4J_PASSWORD)
+    )
+    return driver
+
+async def get_neo4j_session():
+    driver = drivers["neo4j"]  # Reuse the already initialized driver
+    async with driver.session() as session:
+        yield session
+
+######################################################################
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    from .db.neo4jConnection import get_neo4j_driver
-    drivers = get_drivers()
+    # from .db.neo4jConnection import get_neo4j_driver
     drivers["neo4j"] = await get_neo4j_driver()
     yield
     await drivers["neo4j"].close()  # Cleanup: Close driver on shutdown
