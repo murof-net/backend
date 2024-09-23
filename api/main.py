@@ -47,23 +47,23 @@ async def get_neo4j_driver():
     return driver
 
 async def get_neo4j_session():
-    driver = drivers["neo4j"]  # Reuse the already initialized driver
+    driver = await get_neo4j_driver()
     async with driver.session() as session:
         yield session
 
 ######################################################################
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # from .db.neo4jConnection import get_neo4j_driver
-    drivers["neo4j"] = await get_neo4j_driver()
-    yield
-    await drivers["neo4j"].close()  # Cleanup: Close driver on shutdown
-    drivers.clear()
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     # from .db.neo4jConnection import get_neo4j_driver
+#     drivers["neo4j"] = await get_neo4j_driver()
+#     yield
+#     await drivers["neo4j"].close()  # Cleanup: Close driver on shutdown
+#     drivers.clear()
 
 app = FastAPI(
     title="Murof API", 
-    lifespan=lifespan,
+    # lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc"
 )
