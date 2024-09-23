@@ -69,7 +69,7 @@ async def favicon():
     file_path = os.path.join(os.path.dirname(__file__), "./static/favicon.ico")
     return FileResponse(file_path)
 
-@app.get("/test")
+@app.get("/test", include_in_schema=False)
 async def test_db(session = Depends(get_neo4j_session)):
     """Test the database connection"""
     result = await session.run("MATCH (n) RETURN n LIMIT 1")

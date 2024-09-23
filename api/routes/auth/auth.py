@@ -1,7 +1,7 @@
 import os
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from .schemas import RegistrationForm, Token, UserResponse
+from .schemas import RegistrationForm, Token
 from ...neo4jConnection import get_neo4j_session
 from .services import get_password_hash, verify_password, create_access_token, create_refresh_token, get_current_user
 from jose import JWTError, jwt
@@ -53,9 +53,13 @@ async def login_for_access_token(form: OAuth2PasswordRequestForm = Depends(), se
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"}
             )
+    data = {
+        "username": user['u']['username'],
+        "email": user['u']['email']
+    }
     return {
-        "access_token": create_access_token(data={"sub": form.username}), 
-        "refresh_token": create_refresh_token(data={"sub": form.username}),
+        "access_token": create_access_token(data=data), 
+        "refresh_token": create_refresh_token(data=data),
         "token_type": "bearer"}
 
 
@@ -78,9 +82,9 @@ async def refresh_access_token(refresh_token: str):
     }
 
 
-@router.get("/me", response_model=UserResponse)
+@router.get("/me")
 async def read_users_me(current_user: dict = Depends(get_current_user)):
-    return UserResponse(
-        username=current_user["username"],
-        email=current_user["email"]
-    )
+    return {
+        "username": current_user['username'],
+        "email": current_user['email']
+    }
