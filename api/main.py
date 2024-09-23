@@ -11,7 +11,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from .neo4jConnection import get_neo4j_session
+from .db.db import get_drivers
+from .db.neo4jConnection import get_neo4j_session
 import logging
 
 # ROUTES : API route definitions for handling endpoints
@@ -21,12 +22,10 @@ from .routes.auth.auth import router as auth
 
 logging.getLogger('passlib').setLevel(logging.ERROR)
 
-# global variables
-drivers = {}
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    from .neo4jConnection import get_neo4j_driver
+    from .db.neo4jConnection import get_neo4j_driver
+    drivers = get_drivers()
     drivers["neo4j"] = await get_neo4j_driver()
     yield
     await drivers["neo4j"].close()  # Cleanup: Close driver on shutdown

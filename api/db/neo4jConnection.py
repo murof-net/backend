@@ -7,6 +7,7 @@ FastAPI Neo4j DB connection file
 import os
 from neo4j import AsyncGraphDatabase
 from dotenv import load_dotenv
+from .db import get_drivers
 
 # Environment variables
 load_dotenv() # Load environment variables from .env file
@@ -27,7 +28,7 @@ async def get_neo4j_driver():
     return driver
 
 async def get_neo4j_session():
-    from .main import drivers  # Import the drivers dictionary from main.py
+    drivers = get_drivers()
     driver = drivers["neo4j"]  # Reuse the already initialized driver
     async with driver.session() as session:
         yield session
