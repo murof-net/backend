@@ -2,7 +2,7 @@ import os
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from .schemas import RegistrationForm, Token
-from ...db.neo4jConnection import get_neo4j_session
+from ...db import get_neo4j_session
 from .services import get_password_hash, verify_password, create_access_token, create_refresh_token, get_current_user
 from jose import JWTError, jwt
 

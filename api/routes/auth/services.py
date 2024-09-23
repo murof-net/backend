@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, HTTPException, status
-from ...db.neo4jConnection import get_neo4j_session
+from ...db import get_neo4j_session
 from .schemas import TokenData
 
 

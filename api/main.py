@@ -5,54 +5,24 @@ FastAPI application main file
         See: https://www.youtube.com/watch?v=tGD3653BrZ8 for best FastAPI async practices
 """
 
-# MAIN : packages for connecting to the database and running the API
+# MAIN : packages running the API
 import os
-from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-# from .db.db import get_drivers
-# from .db.neo4jConnection import get_neo4j_session
 import logging
+
+# DB : Neo4j connection and session handling
+# from contextlib import asynccontextmanager
+from .db import get_neo4j_session
 
 # ROUTES : API route definitions for handling endpoints
 from .routes.auth.auth import router as auth
 
-######################################################################
-
-logging.getLogger('passlib').setLevel(logging.ERROR)
-
-######################################################################
-# TEMPORARY CHECK TO SEE HOW VERCEL HANDLES THIS
-import os
-from neo4j import AsyncGraphDatabase
-from dotenv import load_dotenv
-load_dotenv() # Load environment variables from .env file
-NEO4J_URI = os.getenv("NEO4J_URI")
-NEO4J_USERNAME = os.getenv("NEO4J_USERNAME")
-NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
-if not (NEO4J_URI and NEO4J_USERNAME and NEO4J_PASSWORD):
-    raise ValueError(
-        "One or more .env variables are not set: NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD"
-        )
-
-drivers = {}
-
-# Create an Async Neo4j driver instance
-async def get_neo4j_driver():
-    driver = AsyncGraphDatabase.driver(
-        NEO4J_URI, 
-        auth=(NEO4J_USERNAME, NEO4J_PASSWORD)
-    )
-    return driver
-
-async def get_neo4j_session():
-    driver = await get_neo4j_driver()
-    async with driver.session() as session:
-        yield session
 
 ######################################################################
 
+# drivers = {}  # global drivers dict to store Neo4j driver (better practice)
 # @asynccontextmanager
 # async def lifespan(app: FastAPI):
 #     # from .db.neo4jConnection import get_neo4j_driver
@@ -61,8 +31,12 @@ async def get_neo4j_session():
 #     await drivers["neo4j"].close()  # Cleanup: Close driver on shutdown
 #     drivers.clear()
 
+logging.getLogger('passlib').setLevel(logging.ERROR)
+
 app = FastAPI(
     title="Murof API", 
+    # Using lifespan and connecting to a driver just once at startup is preferred
+    # but it doesn't work with Vercel's serverless functions 
     # lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc"
