@@ -1,7 +1,6 @@
 import os
 from dotenv import load_dotenv
 from neo4j import AsyncGraphDatabase
-# from .main import drivers # global drivers dict to store Neo4j driver (better practice)
 
 load_dotenv() # Load environment variables from .env file
 NEO4J_URI = os.getenv("NEO4J_URI")
@@ -12,7 +11,6 @@ if not (NEO4J_URI and NEO4J_USERNAME and NEO4J_PASSWORD):
         "One or more .env variables are not set: NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD"
         )
 
-# drivers = {}
 async def get_neo4j_driver():
     driver = AsyncGraphDatabase.driver(
         NEO4J_URI, 

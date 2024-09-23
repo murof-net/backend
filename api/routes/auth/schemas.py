@@ -18,7 +18,7 @@ class RegistrationForm(BaseModel):
         ..., 
         min_length=8, max_length=32,
         description="The password of the user",
-        example="MyP4$$w0rd"
+        example="Pa$$w0rd"
         )
     
     # validators: return 422 error + msg if validation fails
