@@ -77,4 +77,7 @@ async def refresh_access_token(refresh_token: str):
 
 @router.get("/me")
 async def read_users_me(current_user: dict = Depends(get_current_user)):
-    return {"username": current_user["username"]}
+    return {
+        "username": current_user["username"],
+        "hashed_password": current_user["hashed_password"]
+        }

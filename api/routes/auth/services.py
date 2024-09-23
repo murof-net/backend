@@ -48,28 +48,26 @@ def create_refresh_token(data: dict, expires_delta: timedelta = timedelta(days=R
     return create_token(data, expires_delta, "refresh")
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme), session=Depends(get_neo4j_session)):
-    """Get the current user from the JWT token."""
+async def get_current_user(token: str = Depends(oauth2_scheme), session = Depends(get_neo4j_session)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials", 
-        headers={"WWW-Authenticate": "Bearer"}
-        )
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
         token_data = TokenData(username=username)
-    except JWTError:
+    except JWTError as e:
         raise credentials_exception
     
     result = await session.run(
         "MATCH (u:User {username: $username}) RETURN u", 
         username=token_data.username
-        )
+    )
     user = await result.single()
     if user is None:
         raise credentials_exception
-    
     return user['u']
