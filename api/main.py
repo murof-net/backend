@@ -7,13 +7,13 @@ FastAPI application main file
 
 # MAIN : packages running the API
 import os
+from contextlib import asynccontextmanager
+import logging
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-import logging
 
 # DB : Neo4j connection and session handling
-# from contextlib import asynccontextmanager
 from .db import get_neo4j_session
 
 # ROUTES : API route definitions for handling endpoints
@@ -23,21 +23,18 @@ from .routes.auth.auth import router as auth
 ######################################################################
 
 # drivers = {}  # global drivers dict to store Neo4j driver (better practice)
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     # from .db.neo4jConnection import get_neo4j_driver
-#     drivers["neo4j"] = await get_neo4j_driver()
-#     yield
-#     await drivers["neo4j"].close()  # Cleanup: Close driver on shutdown
-#     drivers.clear()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """FastAPI application startup and shutdown context manager"""
+    print("Application is starting up!")
+    yield
+    print("Application is shutting down!")
 
 logging.getLogger('passlib').setLevel(logging.ERROR)
 
 app = FastAPI(
     title="Murof API", 
-    # Using lifespan and connecting to a driver just once at startup is preferred
-    # but it doesn't work with Vercel's serverless functions 
-    # lifespan=lifespan,
+    lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc"
 )
