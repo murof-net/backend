@@ -14,20 +14,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 # DB : Neo4j connection and session handling
-from .db import get_neo4j_session
+from .db import lifespan, get_neo4j_session
+from .models.social import User
 
 # ROUTES : API route definitions for handling endpoints
 from .routes.auth.auth import router as auth
 
-
 ######################################################################
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """FastAPI application startup and shutdown context manager"""
-    print("Starting up")
-    yield
-    print("Shutting down")
 
 logging.getLogger('passlib').setLevel(logging.ERROR)
 
@@ -68,9 +61,22 @@ async def favicon():
     file_path = os.path.join(os.path.dirname(__file__), "./static/favicon.ico")
     return FileResponse(file_path)
 
-@app.get("/test", include_in_schema=False)
-async def test_db(session = Depends(get_neo4j_session)):
-    """Test the database connection"""
-    result = await session.run("MATCH (n) RETURN n LIMIT 1")
+######################################################################
+
+@app.get("/test_neo4j", include_in_schema=False)
+async def test_neo4j(session = Depends(get_neo4j_session)):
+    """Test the neo4j database connection"""
+    username = "robsyc"
+    result = await session.run(
+        "MATCH (u:User {username: $username}) RETURN u", 
+        username=username
+    )
     record = await result.single()
-    return record["n"] if record else "No records found"
+    return record["u"] if record else "No records found"
+
+@app.get("/test_neomodel", include_in_schema=False)
+async def test_neomodel(session = Depends(get_neo4j_session)):
+    """Test the neomodel database connection"""
+    username = "robsyc"
+    result = User.nodes.get_or_none(username=username)
+    return result if result else "No records found"
