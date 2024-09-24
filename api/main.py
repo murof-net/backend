@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 # DB : Neo4j connection and session handling
-from .db import get_neo4j_session, init_neo4j_driver, close_neo4j_driver
+from .db import get_neo4j_session
 
 # ROUTES : API route definitions for handling endpoints
 from .routes.auth.auth import router as auth
@@ -25,13 +25,9 @@ from .routes.auth.auth import router as auth
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """FastAPI application startup and shutdown context manager"""
-    # Initialize Neo4j driver at startup
-    await init_neo4j_driver()
-    print("Neo4j driver initialized on startup!")
+    print("Starting up")
     yield
-    # Close Neo4j driver at shutdown
-    await close_neo4j_driver()
-    print("Neo4j driver closed on shutdown!")
+    print("Shutting down")
 
 logging.getLogger('passlib').setLevel(logging.ERROR)
 
