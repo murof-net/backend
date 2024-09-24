@@ -7,18 +7,36 @@ FastAPI application main file
 
 # MAIN : packages running the API
 import os
-from contextlib import asynccontextmanager
 import logging
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
+# ROUTES : API route definitions for handling endpoints
+# from .routes.auth.auth import router as auth
+
 # DB : Neo4j connection and session handling
-from .db import lifespan, get_neo4j_session
+# from .db import lifespan, get_neo4j_session
+from dotenv import load_dotenv
+from neomodel import config
+from neomodel import adb
 from .models.social import User
 
-# ROUTES : API route definitions for handling endpoints
-from .routes.auth.auth import router as auth
+load_dotenv() # Load environment variables from .env file
+NEO4J_URI = os.getenv("NEO4J_URI")
+NEO4J_USERNAME = os.getenv("NEO4J_USERNAME")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
+if not (NEO4J_URI and NEO4J_USERNAME and NEO4J_PASSWORD):
+    raise ValueError(
+        "One or more .env variables are not set: NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD"
+        )
+
+drivers = {}
+config.DATABASE_URL = 'neo4j+s://{}:{}@{}'.format(
+    NEO4J_USERNAME, 
+    NEO4J_PASSWORD, 
+    NEO4J_URI.split("://")[1]
+    )
 
 ######################################################################
 
@@ -26,7 +44,7 @@ logging.getLogger('passlib').setLevel(logging.ERROR)
 
 app = FastAPI(
     title="Murof API", 
-    lifespan=lifespan,
+    # lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -44,7 +62,7 @@ app.add_middleware(
     allow_credentials=True
 )
 
-app.include_router(auth, prefix="/auth")
+# app.include_router(auth, prefix="/auth")
 
 ######################################################################
 
@@ -64,19 +82,15 @@ async def favicon():
 ######################################################################
 
 @app.get("/test_neo4j", include_in_schema=False)
-async def test_neo4j(session = Depends(get_neo4j_session)):
+async def test_neo4j():
     """Test the neo4j database connection"""
-    username = "robsyc"
-    result = await session.run(
-        "MATCH (u:User {username: $username}) RETURN u", 
-        username=username
-    )
-    record = await result.single()
-    return record["u"] if record else "No records found"
+    query = "MATCH (u:User {{ username: '{username}' }}) RETURN u".format(username="robsyc")
+    results, meta = await adb.cypher_query(query)
+    return results[0][0] if results else "No records found"
 
 @app.get("/test_neomodel", include_in_schema=False)
-async def test_neomodel(session = Depends(get_neo4j_session)):
+async def test_neomodel():
     """Test the neomodel database connection"""
     username = "robsyc"
-    result = User.nodes.get_or_none(username=username)
+    result = await User.nodes.get_or_none(username=username)
     return result if result else "No records found"

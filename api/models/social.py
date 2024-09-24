@@ -1,7 +1,7 @@
 from neomodel import (
-    StructuredNode, 
-    RelationshipTo, 
-    RelationshipFrom, 
+    AsyncStructuredNode, 
+    AsyncRelationshipTo, 
+    AsyncRelationshipFrom, 
     StringProperty, 
     RegexProperty, 
     DateProperty, 
@@ -9,7 +9,7 @@ from neomodel import (
     BooleanProperty
 )
 
-class User(StructuredNode):
+class User(AsyncStructuredNode):
     username = StringProperty(unique_index=True, required=True)
     email = RegexProperty(
         r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)",
