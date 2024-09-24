@@ -12,7 +12,6 @@ if not (NEO4J_URI and NEO4J_USERNAME and NEO4J_PASSWORD):
         "One or more .env variables are not set: NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD"
         )
 
-@lru_cache()  # Cache the driver so it's reused between requests
 def get_neo4j_driver():
     return AsyncGraphDatabase.driver(
         NEO4J_URI,
