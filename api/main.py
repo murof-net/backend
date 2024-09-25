@@ -15,7 +15,7 @@ from fastapi.responses import FileResponse
 # ROUTES : API route definitions for handling endpoints
 from .routes.auth.auth import router as auth
 
-# DB : Neo4j connection and session handling
+# DB : Neo4j connection, sessions and CRUD operations
 from dotenv import load_dotenv
 from neomodel import config
 from neomodel import adb
