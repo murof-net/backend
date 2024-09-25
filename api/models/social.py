@@ -14,7 +14,7 @@ from neomodel import (
 
 class User(AsyncStructuredNode):
     uid = UniqueIdProperty()
-    verified = BooleanProperty(default=False)
+    is_verified = BooleanProperty(default=False)
     created_at = DateTimeProperty(default_now=True)
 
     # first_name = StringProperty(required=True, min_length=1, max_length=32)
