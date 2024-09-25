@@ -8,15 +8,14 @@ FastAPI application main file
 # MAIN : packages running the API
 import os
 import logging
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 # ROUTES : API route definitions for handling endpoints
-# from .routes.auth.auth import router as auth
+from .routes.auth.auth import router as auth
 
 # DB : Neo4j connection and session handling
-# from .db import lifespan, get_neo4j_session
 from dotenv import load_dotenv
 from neomodel import config
 from neomodel import adb
@@ -44,7 +43,7 @@ logging.getLogger('passlib').setLevel(logging.ERROR)
 
 app = FastAPI(
     title="Murof API", 
-    # lifespan=lifespan,
+    # lifespan=lifespan, # see archived db.py file
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -62,7 +61,7 @@ app.add_middleware(
     allow_credentials=True
 )
 
-# app.include_router(auth, prefix="/auth")
+app.include_router(auth, prefix="/auth")
 
 ######################################################################
 
@@ -81,16 +80,23 @@ async def favicon():
 
 ######################################################################
 
-@app.get("/test_neo4j", include_in_schema=False)
-async def test_neo4j():
-    """Test the neo4j database connection"""
-    query = "MATCH (u:User {{ username: '{username}' }}) RETURN u".format(username="robsyc")
-    results, meta = await adb.cypher_query(query)
-    return results[0][0] if results else "No records found"
-
-@app.get("/test_neomodel", include_in_schema=False)
-async def test_neomodel():
-    """Test the neomodel database connection"""
+@app.get("/test", include_in_schema=False)
+async def test():
+    """Test the neo4j database connection & neomodel"""
     username = "robsyc"
-    result = await User.nodes.get_or_none(username=username)
-    return result if result else "No records found"
+
+    query = f"MATCH (u:User {{ username: '{username}' }}) RETURN u"
+    results_adb, meta = await adb.cypher_query(query)
+    user_adb = results_adb[0][0] if results_adb else None
+
+    results_neomodel = await User.nodes.get_or_none(username=username)
+    user_neomodel = {
+        "hashed_password": results_neomodel.hashed_password,
+        "email": results_neomodel.email,
+        "username": results_neomodel.username
+    } if results_neomodel else None
+
+    return {
+        "adb": user_adb if user_adb else "No records found",
+        "neomodel": user_neomodel if user_neomodel else "No records found",
+    }

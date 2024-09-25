@@ -16,7 +16,7 @@ class RegistrationForm(BaseModel):
         )
     password: str = Field(
         ..., 
-        min_length=8, max_length=32,
+        min_length=8, max_length=64,
         description="The password of the user",
         example="Pa$$w0rd"
         )

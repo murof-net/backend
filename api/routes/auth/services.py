@@ -1,14 +1,15 @@
 # Auth-related helper functions
 import os
+from dotenv import load_dotenv
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, HTTPException, status
-from ...db import get_neo4j_session
+from ...models.social import User
 from .schemas import TokenData
 
-
+load_dotenv()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = os.environ.get("SECRET_KEY") or None
@@ -48,7 +49,7 @@ def create_refresh_token(data: dict, expires_delta: timedelta = timedelta(days=R
     return create_token(data, expires_delta, "refresh")
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme), session = Depends(get_neo4j_session)):
+async def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -62,12 +63,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme), session = Depend
         token_data = TokenData(username=username)
     except JWTError as e:
         raise credentials_exception
-    
-    result = await session.run(
-        "MATCH (u:User {username: $username}) RETURN u", 
-        username=token_data.username
-    )
-    user = await result.single()
+
+    user = await User.nodes.get_or_none(username=token_data.username)
     if user is None:
         raise credentials_exception
-    return user['u']
+    return user
