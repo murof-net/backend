@@ -32,9 +32,9 @@ from datetime import datetime
 # - rotate JWT secret key
 # - introduce rate limiting login/registration/password reset
 # - lockout for too many failed login attempts
-# - delete account route (for GDPR purposes)
 # - blacklist (password reset) tokens
 # - introduce OAuth with Google/Facebook/LinkedIn/Microsoft/Apple/GitHub
+# - add extra registration fields (e.g. first/last name, birthdate, languages, etc.)
 
 
 ######################################################################
@@ -259,3 +259,15 @@ async def read_users_me(current_user: dict = Depends(get_current_user)):
         "username": current_user.username,
         "email": current_user.email
     }
+
+@router.get("/delete")
+async def delete_user(current_user: dict = Depends(get_current_user)):
+    """
+    Delete user endpoint. Deletes the current logged in user.
+    Args:
+        current_user (dict): Current user.
+    Returns:
+        dict: A success message.
+    """
+    await current_user.delete()
+    return {"message": "User deleted"}

@@ -42,11 +42,9 @@ Check out the autamatic `/docs` route
 - [x] connection with neo4j
 - [x] Development bash script (also for frontend)
 - [x] JWT authentication
-- [ ] Host on Vercel serverless
-- [ ] Proper JWT auth with SvelteKit frontend (or without in case API is used stand-alone)
-- [ ] update startup to use neo4j desktop DBMS instead of systemctl
-- [ ] first basic endpoint for sveltekit front-end request
+- [x] Host on Render
+- [ ] Link auth to frontend
 - [ ] unit tests (with `pytest`?)
-- [ ] api setup and documentation
+- [ ] room and note models
 - [ ] knowledge-graph with the [Neo4j graphbuilder tool](https://llm-graph-builder.neo4jlabs.com/) or more intricate custom LangChain setup + Google Gemini (flash)
 - [ ] PostgreSQL DB setup for [Trax LRS](https://traxlrs.com/) & instant messaging with WebSocket
