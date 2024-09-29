@@ -50,7 +50,7 @@ app = FastAPI(
 
 # CORS middleware from SvelteKit frontend
 origins = [
-    "http://localhost:517*",
+    "http://localhost:5173",
     "https://murof.net"
 ]
 app.add_middleware(

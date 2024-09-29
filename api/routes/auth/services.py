@@ -13,6 +13,12 @@ from pydantic import EmailStr
 from ...models.social import User
 from .schemas import TokenData
 
+from .email_templates import (
+    email_confirm,
+    email_warning,
+    password_reset
+)
+
 ######################################################################
 
 load_dotenv()
@@ -68,6 +74,75 @@ def create_refresh_token(data: dict, expires_delta: timedelta = timedelta(days=R
     """Create refresh token."""
     return create_token(data, expires_delta, "refresh")
 
+
+######################################################################
+
+def create_verification_token(email: str):
+    data = {"sub": email}
+    return create_token(data, timedelta(hours=24), "email_verification")
+
+async def send_verification_email(email: EmailStr, username: str, verification_token: str):
+    verification_link = f"https://api.murof.net/auth/verify/{verification_token}"
+    message = MessageSchema(
+        subject="Activating your Murof account",
+        recipients=[email],
+        body=email_confirm.format(email=email, username=username, verification_link=verification_link),
+        subtype=MessageType.plain
+    )
+    fm = FastMail(conf)
+    await fm.send_message(message)
+
+async def send_warning_email(email: EmailStr, username: str):
+    message = MessageSchema(
+        subject="Murof account warning",
+        recipients=[email],
+        body=email_warning.format(email=email, username=username),
+        subtype=MessageType.plain
+    )
+    fm = FastMail(conf)
+    await fm.send_message(message)
+
+async def verify_email_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        sub: str = payload.get("sub")
+        if sub is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return sub
+
+######################################################################
+
+def create_password_reset_token(email: EmailStr):
+    data = {"sub": email}
+    return create_token(data, timedelta(minutes=15), "password_reset")
+
+def mask_email(email: EmailStr):
+    email = email.split("@")
+    return email[0][0] + "*"*(len(email[0])-2) + email[0][-1] + "@" + email[1]
+
+async def send_password_reset_email(email: EmailStr, username: str, reset_token: str):
+    reset_link = f"https://murof.net/auth/reset?token={reset_token}"
+    message = MessageSchema(
+        subject="Resetting your Murof password",
+        recipients=[email],
+        body=password_reset.format(email=email, username=username, reset_link=reset_link),
+        subtype=MessageType.plain
+    )
+    fm = FastMail(conf)
+    await fm.send_message(message)
+
+async def verify_password_reset_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        sub: str = payload.get("sub")
+        if sub is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return sub
+
 ######################################################################
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
@@ -89,67 +164,3 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     if user is None:
         raise credentials_exception
     return user
-
-######################################################################
-
-email_template_confirm = """Hi there {username},
-
-Thank you for signing up to Murof! Please click the link below to verify your email:
-
-{verification_link}
-
-This link will expire in 24 hours. If you did not sign up for Murof, you can safely ignore this email.
-
-Best,
-The Murof Team
-"""
-
-email_template_warning = """Hi there {username},
-
-We noticed that someone tried to sign up for Murof using your email address. However, this email address is already associated with an account on our platform.
-
-What now?
-- If this was not you, you can safely ignore this email.
-- If this was you, please sign in using your existing account.
-- If you've forgotten your password and can't sign in, reset your password: https://api.murof.net/auth/reset-password
-- If you have any questions or concerns, please contact us: contact@murof.net
-
-Best,
-The Murof Team
-"""
-
-def create_verification_token(email: str):
-    """Create a email verification token."""
-    data = {"sub": email}
-    return create_token(data, timedelta(hours=24), "email_verification")
-
-async def send_verification_email(email: EmailStr, username: str, verification_token: str):
-    verification_link = f"https://api.murof.net/auth/verify/{verification_token}"
-    message = MessageSchema(
-        subject="Activating your Murof account",
-        recipients=[email],
-        body=email_template_confirm.format(email=email, username=username, verification_link=verification_link),
-        subtype=MessageType.plain
-    )
-    fm = FastMail(conf)
-    await fm.send_message(message)
-
-async def send_warning_email(email: EmailStr, username: str):
-    message = MessageSchema(
-        subject="Murof account warning",
-        recipients=[email],
-        body=email_template_warning.format(email=email, username=username),
-        subtype=MessageType.plain
-    )
-    fm = FastMail(conf)
-    await fm.send_message(message)
-
-async def verify_email_token(token: str):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        sub: str = payload.get("sub")
-        if sub is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    return sub

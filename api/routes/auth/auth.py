@@ -2,9 +2,13 @@ import os
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from .schemas import RegistrationForm, Token
+# from neomodel import adb
+from .schemas import (
+    RegistrationForm, 
+    Token, 
+    PasswordResetForm
+)
 from ...models.social import User
-from neomodel import adb
 from .services import (
     get_password_hash, 
     verify_password, 
@@ -14,16 +18,26 @@ from .services import (
     create_verification_token,
     send_verification_email,
     send_warning_email,
-    verify_email_token
+    verify_email_token,
+    create_password_reset_token,
+    mask_email,
+    send_password_reset_email,
+    verify_password_reset_token
 )
 from jose import JWTError, jwt
 
+
+######################################################################
+# SET VARIABLES
 
 load_dotenv()
 router = APIRouter(tags=["auth"])
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 
+
+######################################################################
+# REGISTRATION
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register_user(form: RegistrationForm):
@@ -32,15 +46,16 @@ async def register_user(form: RegistrationForm):
     Args:
         form (RegistrationForm): User registration form.
     Returns:
-        dict: A success message.
+        dict: A success message and email address.
     """
     # Check if username is already taken
     if await User.nodes.get_or_none(username=form.username):
         raise HTTPException(status_code=400, detail="Username already taken")
     
     # Check if email is already taken (without letting the client know)
-    if await User.nodes.get_or_none(email=form.email):
-        await send_warning_email(form.email, form.username)
+    user = await User.nodes.get_or_none(email=form.email)
+    if user:
+        await send_warning_email(form.email, user.username)
     else:
         # Create user
         hashed_password = get_password_hash(form.password)
@@ -68,7 +83,7 @@ async def verify_email(token: str):
     Args:
         token (str): Verification token send to user's email upon registration.
     Returns:
-        dict: A success message.
+        dict: A success message and email address.
     """
     email = await verify_email_token(token)
     user = await User.nodes.get_or_none(email=email)
@@ -76,8 +91,14 @@ async def verify_email(token: str):
         raise HTTPException(status_code=404, detail="User not found")
     user.is_verified = True
     await user.save()
-    return {"message": "Email verified, you can now login"}
+    # return {
+    #     "message": "Email verified, you can now login",
+    #     "email": email
+    #     }
 
+
+######################################################################
+# LOGIN
 
 @router.post("/token", response_model=Token)
 async def login_for_access_token(form: OAuth2PasswordRequestForm = Depends()):
@@ -116,7 +137,7 @@ async def login_for_access_token(form: OAuth2PasswordRequestForm = Depends()):
         "token_type": "bearer"}
 
 
-@router.post("/refresh", response_model=Token)
+@router.get("/refresh/{refresh_token}", response_model=Token)
 async def refresh_access_token(refresh_token: str):
     """
     Refresh access token endpoint. Checks if the refresh token is valid and returns a new access token.
@@ -146,8 +167,78 @@ async def refresh_access_token(refresh_token: str):
     }
 
 
+######################################################################
+# PASSWORD RESET
+
+@router.get("/reset/request/{identifier}")
+async def reset_password_request(identifier: str):
+    """
+    Reset password endpoint. Checks if the user exists and sends a password reset email.
+    Args:
+        identifier (str): The username or email of the user.
+    Returns:
+        dict: A success message and email address.
+    """
+    is_email = "@" in identifier
+    if is_email:
+        email = identifier
+        user = await User.nodes.get_or_none(email=identifier)
+        if user:
+            token = create_password_reset_token(email)
+            await send_password_reset_email(
+                user.email, 
+                user.username, 
+                token
+            )
+    else:
+        user = await User.nodes.get_or_none(username=identifier)
+        if user:
+            email = user.email
+            token = create_password_reset_token(email)
+            await send_password_reset_email(
+                user.email, 
+                user.username, 
+                token
+            )
+        else:
+            raise HTTPException(status_code=404, detail="User not found")
+    return {
+        "message": "Password reset request successful, please check your email",
+        "email": mask_email(email)
+    }
+
+
+@router.post("/reset/password")
+async def reset_password(form: PasswordResetForm):
+    """
+    Reset password endpoint. Checks if the token is valid and resets the user's password.
+    Args:
+        form (PasswordResetForm): The password reset form.
+    Returns:
+        dict: A success message and email address.
+    """
+    email = await verify_password_reset_token(form.token)
+    user = await User.nodes.get_or_none(email=email)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    hashed_password = get_password_hash(form.password)
+    user.hashed_password = hashed_password
+    await user.save()
+    return {"message": "Password reset successful"}
+
+
+######################################################################
+# ME
+
 @router.get("/me")
 async def read_users_me(current_user: dict = Depends(get_current_user)):
+    """
+    Get current user endpoint. Returns the current user's username and email.
+    Args:
+        current_user (dict): Current user.
+    Returns:
+        dict: Current user's username and email.
+    """
     return {
         "username": current_user.username,
         "email": current_user.email
