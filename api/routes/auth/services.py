@@ -28,10 +28,12 @@ SECRET_KEY = os.environ.get("SECRET_KEY") or None
 ALGORITHM = os.environ.get("ALGORITHM") or "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES")) or 30
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.environ.get("REFRESH_TOKEN_EXPIRE_DAYS")) or 7
+MAIL_USERNAME = os.environ.get("MAIL_USERNAME") or None
+MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD") or None
 
-if not (SECRET_KEY and ALGORITHM and ACCESS_TOKEN_EXPIRE_MINUTES and REFRESH_TOKEN_EXPIRE_DAYS):
+if not (SECRET_KEY and ALGORITHM and ACCESS_TOKEN_EXPIRE_MINUTES and REFRESH_TOKEN_EXPIRE_DAYS and MAIL_USERNAME and MAIL_PASSWORD):
     raise ValueError(
-        "One or more .env variables are not set: SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS"
+        "One or more .env variables are not set"
         )
 
 conf = ConnectionConfig(
