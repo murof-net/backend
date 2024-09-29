@@ -27,7 +27,13 @@ ALGORITHM = os.getenv("ALGORITHM")
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register_user(form: RegistrationForm):
-    """Register endpoint, validates form and creates a new user"""
+    """
+    User registration endpoint. Checks if username/email is already taken and creates a new user.
+    Args:
+        form (RegistrationForm): User registration form.
+    Returns:
+        dict: A success message.
+    """
     # Check if username is already taken
     if await User.nodes.get_or_none(username=form.username):
         raise HTTPException(status_code=400, detail="Username already taken")
@@ -44,18 +50,26 @@ async def register_user(form: RegistrationForm):
             hashed_password=hashed_password
         ).save()
         token = create_verification_token(user.email)
-        # await send_verification_email(
-        #     user.email, 
-        #     user.username, 
-        #     token
-        # )
-        print(token)
-    return {"message": "User registration successful, please check your email"}
+        await send_verification_email(
+            user.email, 
+            user.username, 
+            token
+        )
+    return {
+        "message": "User registration successful, please check your email",
+        "email": form.email
+        }
 
 
 @router.get("/verify/{token}")
 async def verify_email(token: str):
-    """Verify email endpoint"""
+    """
+    Email verification endpoint. Checks if the token is valid and marks the user as verified.
+    Args:
+        token (str): Verification token send to user's email upon registration.
+    Returns:
+        dict: A success message.
+    """
     email = await verify_email_token(token)
     user = await User.nodes.get_or_none(email=email)
     if user is None:
@@ -67,7 +81,13 @@ async def verify_email(token: str):
 
 @router.post("/token", response_model=Token)
 async def login_for_access_token(form: OAuth2PasswordRequestForm = Depends()):
-    """Login endpoint, validates form, authenticates user and creates JWT tokens"""
+    """
+    User login endpoint. Checks if the user exists and the password is correct.
+    Args:
+        form (OAuth2PasswordRequestForm): User login form.
+    Returns:
+        dict: An access token and refresh token.
+    """
     is_email = "@" in form.username
     if is_email:
         user = await User.nodes.get_or_none(email=form.username)
@@ -98,12 +118,17 @@ async def login_for_access_token(form: OAuth2PasswordRequestForm = Depends()):
 
 @router.post("/refresh", response_model=Token)
 async def refresh_access_token(refresh_token: str):
-    """Refresh access token endpoint"""
+    """
+    Refresh access token endpoint. Checks if the refresh token is valid and returns a new access token.
+    Args:
+        refresh_token (str): Refresh token.
+    Returns:
+        dict: An access token and refresh token.
+    """
     try:
         payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
         sub: str = payload.get("sub")
         username: str = payload.get("username")
-        email: str = payload.get("email")
         token_type: str = payload.get("type")
         if username is None or token_type != "refresh":
             raise HTTPException(status_code=401, detail="Invalid refresh token")
@@ -123,8 +148,6 @@ async def refresh_access_token(refresh_token: str):
 
 @router.get("/me")
 async def read_users_me(current_user: dict = Depends(get_current_user)):
-    print(current_user)
-    print(type(current_user))
     return {
         "username": current_user.username,
         "email": current_user.email

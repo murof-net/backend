@@ -29,11 +29,11 @@ if not (SECRET_KEY and ALGORITHM and ACCESS_TOKEN_EXPIRE_MINUTES and REFRESH_TOK
         )
 
 conf = ConnectionConfig(
-    MAIL_USERNAME = "noreply@murof.net",
-    MAIL_PASSWORD = "your_email_password",
-    MAIL_FROM = "noreply@murof.net",
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME"),
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD"),
+    MAIL_FROM = "no-reply@murof.net",
     MAIL_PORT = 587,
-    MAIL_SERVER = "smtp.cloudflare.com",
+    MAIL_SERVER = "smtp.gmail.com",
     MAIL_FROM_NAME = "Murof",
     MAIL_STARTTLS = True,
     MAIL_SSL_TLS = False,
@@ -94,7 +94,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
 email_template_confirm = """Hi there {username},
 
-Thank you for signing up for Murof! Please click the link below to verify your email:
+Thank you for signing up to Murof! Please click the link below to verify your email:
 
 {verification_link}
 
@@ -120,14 +120,13 @@ The Murof Team
 
 def create_verification_token(email: str):
     """Create a email verification token."""
-    expiration = datetime.now() + timedelta(hours=24)
-    data = {"sub": email, "exp": expiration}
+    data = {"sub": email}
     return create_token(data, timedelta(hours=24), "email_verification")
 
 async def send_verification_email(email: EmailStr, username: str, verification_token: str):
     verification_link = f"https://api.murof.net/auth/verify/{verification_token}"
     message = MessageSchema(
-        subject="Activate your Murof account",
+        subject="Activating your Murof account",
         recipients=[email],
         body=email_template_confirm.format(email=email, username=username, verification_link=verification_link),
         subtype=MessageType.plain
