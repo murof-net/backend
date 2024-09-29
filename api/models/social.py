@@ -16,6 +16,7 @@ class User(AsyncStructuredNode):
     uid = UniqueIdProperty()
     is_verified = BooleanProperty(default=False)
     created_at = DateTimeProperty(default_now=True)
+    last_login = DateTimeProperty(default_now=True)
 
     username = StringProperty(unique_index=True, required=True, min_length=3, max_length=32)
     email = EmailProperty(unique_index=True, required=True)

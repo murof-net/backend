@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-# from neomodel import adb
+from neomodel import Q
 from .schemas import (
     RegistrationForm, 
     Token, 
@@ -18,13 +18,23 @@ from .services import (
     create_verification_token,
     send_verification_email,
     send_warning_email,
-    verify_email_token,
+    verify_token,
     create_password_reset_token,
     mask_email,
-    send_password_reset_email,
-    verify_password_reset_token
+    send_password_reset_email
 )
 from jose import JWTError, jwt
+from datetime import datetime
+
+
+# TODO:
+# - hash email addresses in db  (for GDPR purposes?)
+# - rotate JWT secret key
+# - introduce rate limiting login/registration/password reset
+# - lockout for too many failed login attempts
+# - delete account route (for GDPR purposes)
+# - blacklist (password reset) tokens
+# - introduce OAuth with Google/Facebook/LinkedIn/Microsoft/Apple/GitHub
 
 
 ######################################################################
@@ -48,14 +58,16 @@ async def register_user(form: RegistrationForm):
     Returns:
         dict: A success message and email address.
     """
-    # Check if username is already taken
-    if await User.nodes.get_or_none(username=form.username):
-        raise HTTPException(status_code=400, detail="Username already taken")
-    
-    # Check if email is already taken (without letting the client know)
-    user = await User.nodes.get_or_none(email=form.email)
+    # Check if username/email is already in use
+    try:
+        user = await User.nodes.get(Q(username=form.username) | Q(email=form.email))
+    except User.DoesNotExist:
+        user = None
     if user:
-        await send_warning_email(form.email, user.username)
+        if user.email == form.email:
+            await send_warning_email(form.email, user.username) # cannot let client know!
+        elif user.username == form.username:
+            raise HTTPException(status_code=400, detail="Username already taken")
     else:
         # Create user
         hashed_password = get_password_hash(form.password)
@@ -85,16 +97,16 @@ async def verify_email(token: str):
     Returns:
         dict: A success message and email address.
     """
-    email = await verify_email_token(token)
+    email = await verify_token(token, "email_verification")
     user = await User.nodes.get_or_none(email=email)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     user.is_verified = True
     await user.save()
-    # return {
-    #     "message": "Email verified, you can now login",
-    #     "email": email
-    #     }
+    return {
+        "message": "Email verified, you can now login",
+        "email": email
+        }
 
 
 ######################################################################
@@ -127,6 +139,8 @@ async def login_for_access_token(form: OAuth2PasswordRequestForm = Depends()):
             detail="Email not verified",
             headers={"WWW-Authenticate": "Bearer"}
         )
+    user.last_login = datetime.now()
+    await user.save()
     data = {
         "sub": user.uid,
         "username": user.username
@@ -217,11 +231,13 @@ async def reset_password(form: PasswordResetForm):
     Returns:
         dict: A success message and email address.
     """
-    email = await verify_password_reset_token(form.token)
+    email = await verify_token(form.token, "password_reset")
     user = await User.nodes.get_or_none(email=email)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     hashed_password = get_password_hash(form.password)
+    if hashed_password == user.hashed_password:
+        raise HTTPException(status_code=400, detail="New password cannot be the same as old password")
     user.hashed_password = hashed_password
     await user.save()
     return {"message": "Password reset successful"}

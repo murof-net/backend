@@ -11,7 +11,6 @@ from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from pydantic import EmailStr
 
 from ...models.social import User
-from .schemas import TokenData
 
 from .email_templates import (
     email_confirm,
@@ -52,16 +51,12 @@ conf = ConnectionConfig(
 ######################################################################
 
 def verify_password(plain_password, hashed_password):
-    """Verify a password against its hash."""
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password):
-    """Hash a plain password."""
     return pwd_context.hash(password)
 
-
 def create_token(data: dict, expires_delta: timedelta, token_type: str):
-    """Create JWT token."""
     to_encode = data.copy()
     expire = datetime.now() + expires_delta
     to_encode.update({"exp": expire, "type": token_type})
@@ -69,13 +64,10 @@ def create_token(data: dict, expires_delta: timedelta, token_type: str):
     return encoded_jwt
 
 def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)):
-    """Create access token."""
     return create_token(data, expires_delta, "access")
 
 def create_refresh_token(data: dict, expires_delta: timedelta = timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)):
-    """Create refresh token."""
     return create_token(data, expires_delta, "refresh")
-
 
 ######################################################################
 
@@ -84,6 +76,7 @@ def create_verification_token(email: str):
     return create_token(data, timedelta(hours=24), "email_verification")
 
 async def send_verification_email(email: EmailStr, username: str, verification_token: str):
+    # TODO: might want to link to frontend instead
     verification_link = f"https://api.murof.net/auth/verify/{verification_token}"
     message = MessageSchema(
         subject="Activating your Murof account",
@@ -104,21 +97,19 @@ async def send_warning_email(email: EmailStr, username: str):
     fm = FastMail(conf)
     await fm.send_message(message)
 
-async def verify_email_token(token: str):
+async def verify_token(token: str, token_type: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        sub: str = payload.get("sub")
-        if sub is None:
+        if payload["type"] != token_type:
             raise HTTPException(status_code=401, detail="Invalid token")
+        sub = payload["sub"]
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
     return sub
 
-######################################################################
-
 def create_password_reset_token(email: EmailStr):
     data = {"sub": email}
-    return create_token(data, timedelta(minutes=15), "password_reset")
+    return create_token(data, timedelta(minutes=10), "password_reset")
 
 def mask_email(email: EmailStr):
     email = email.split("@")
@@ -135,34 +126,11 @@ async def send_password_reset_email(email: EmailStr, username: str, reset_token:
     fm = FastMail(conf)
     await fm.send_message(message)
 
-async def verify_password_reset_token(token: str):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        sub: str = payload.get("sub")
-        if sub is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    return sub
-
 ######################################################################
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("username")
-        if username is None:
-            raise credentials_exception
-        token_data = TokenData(username=username)
-    except JWTError as e:
-        raise credentials_exception
-
-    user = await User.nodes.get_or_none(username=token_data.username)
+    sub = await verify_token(token, "access")
+    user = await User.nodes.get_or_none(uid=sub)
     if user is None:
-        raise credentials_exception
+        raise HTTPException(status_code=404, detail="User not found")
     return user

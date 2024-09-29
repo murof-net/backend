@@ -30,7 +30,7 @@ We received a request to reset your password on Murof. Please click the link bel
 
 {reset_link}
 
-This link will expire in 15 minutes. If you did not request a password reset, you can safely ignore this email.
+This link will expire in 10 minutes. If you did not request a password reset, you can safely ignore this email.
 
 Best,
 The Murof Team
