@@ -28,6 +28,7 @@ from datetime import datetime
 
 
 # TODO:
+# - switch to using pyJWT instead of jose
 # - hash email addresses in db  (for GDPR purposes?)
 # - rotate JWT secret key
 # - introduce rate limiting login/registration/password reset
@@ -59,15 +60,11 @@ async def register_user(form: RegistrationForm):
         dict: A success message and email address.
     """
     # Check if username/email is already in use
-    try:
-        user = await User.nodes.get(Q(username=form.username) | Q(email=form.email))
-    except User.DoesNotExist:
-        user = None
+    if await User.nodes.get_or_none(username=form.username):
+        raise HTTPException(status_code=400, detail="Username already taken")
+    user = await User.nodes.get_or_none(email=form.email)
     if user:
-        if user.email == form.email:
-            await send_warning_email(form.email, user.username) # cannot let client know!
-        elif user.username == form.username:
-            raise HTTPException(status_code=400, detail="Username already taken")
+        await send_warning_email(form.email, user.username) # cannot let client know!
     else:
         # Create user
         hashed_password = get_password_hash(form.password)
@@ -84,6 +81,7 @@ async def register_user(form: RegistrationForm):
         )
     return {
         "message": "User registration successful, please check your email",
+        "username": form.username,
         "email": form.email
         }
 
