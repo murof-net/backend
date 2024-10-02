@@ -77,7 +77,7 @@ def create_verification_token(email: str):
 
 async def send_verification_email(email: EmailStr, username: str, verification_token: str):
     # TODO: might want to link to frontend instead
-    verification_link = f"https://api.murof.net/auth/verify/{verification_token}"
+    verification_link = f"https://murof.net/auth/register/activate?token={verification_token}"
     message = MessageSchema(
         subject="Activating your Murof account",
         recipients=[email],

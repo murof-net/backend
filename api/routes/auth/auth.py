@@ -61,7 +61,7 @@ async def register_user(form: RegistrationForm):
     """
     # Check if username/email is already in use
     if await User.nodes.get_or_none(username=form.username):
-        raise HTTPException(status_code=400, detail="Username already taken")
+        raise HTTPException(status_code=400, detail="Username already taken, please choose a different one.")
     user = await User.nodes.get_or_none(email=form.email)
     if user:
         await send_warning_email(form.email, user.username) # cannot let client know!
@@ -80,7 +80,7 @@ async def register_user(form: RegistrationForm):
             token
         )
     return {
-        "message": "User registration successful, please check your email",
+        "message": "User registration successful, please check your email.",
         "username": form.username,
         "email": form.email
         }
@@ -98,11 +98,13 @@ async def verify_email(token: str):
     email = await verify_token(token, "email_verification")
     user = await User.nodes.get_or_none(email=email)
     if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="User not found.")
     user.is_verified = True
     await user.save()
+    username = user.username
     return {
-        "message": "Email verified, you can now login",
+        "message": "Email verified, you can now login.",
+        "username": username,
         "email": email
         }
 
@@ -128,13 +130,13 @@ async def login_for_access_token(form: OAuth2PasswordRequestForm = Depends()):
     if user is None or not verify_password(form.password, user.hashed_password):
         raise HTTPException(
             status_code=401, 
-            detail="Incorrect identifier or password",
+            detail="Incorrect identifier or password.",
             headers={"WWW-Authenticate": "Bearer"}
             )
     if not user.is_verified:
         raise HTTPException(
             status_code=401,
-            detail="Email not verified",
+            detail="Email has not yet been verified.",
             headers={"WWW-Authenticate": "Bearer"}
         )
     user.last_login = datetime.now()
@@ -202,6 +204,7 @@ async def reset_password_request(identifier: str):
                 user.username, 
                 token
             )
+        # TODO: add something here to handle if the user doesn't exist
     else:
         user = await User.nodes.get_or_none(username=identifier)
         if user:
