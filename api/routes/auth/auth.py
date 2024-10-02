@@ -216,7 +216,7 @@ async def reset_password_request(identifier: str):
                 token
             )
         else:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(status_code=404, detail="No user found with that username or email")
     return {
         "message": "Password reset request successful, please check your email",
         "email": mask_email(email)
