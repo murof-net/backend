@@ -116,7 +116,7 @@ def mask_email(email: EmailStr):
     return email[0][0] + "*"*(len(email[0])-2) + email[0][-1] + "@" + email[1]
 
 async def send_password_reset_email(email: EmailStr, username: str, reset_token: str):
-    reset_link = f"https://murof.net/auth/reset/new-password?token={reset_token}"
+    reset_link = f"https://murof.net/auth/reset/password?token={reset_token}"
     message = MessageSchema(
         subject="Resetting your Murof password",
         recipients=[email],
